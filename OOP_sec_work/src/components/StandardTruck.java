@@ -1,5 +1,7 @@
 package components;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class StandardTruck extends Truck{
@@ -67,20 +69,34 @@ public class StandardTruck extends Truck{
 		destination.addPackage(p);
 	}
 	
-	public void load (Branch sender, Branch dest, Status status) {
-		double totalWeight=0;
-		for (int i=0; i< sender.getPackages().size();i++) {
-			Package p=sender.getPackages().get(i);
-			if (p.getStatus()==Status.BRANCH_STORAGE || (p.getStatus()==Status.HUB_STORAGE && p.getDestBranch()==dest)) {
-				if (p instanceof SmallPackage && totalWeight+1<=maxWeight || totalWeight+((StandardPackage)p).getWeight()<=maxWeight) {
-					getPackages().add(p);
-					sender.removePackage(p);
-					i--;
-					p.addRecords(status, this);
+	public void load(Branch sender, Branch dest, Status status) {
+		double totalWeight = 0;
+		List<Package> packagesToLoad = new ArrayList<>();
+		
+		// First pass: identify packages to load (read-only)
+		synchronized(sender.getPackages()) {
+			for (Package p : sender.getPackages()) {
+				if (p.getStatus() == Status.BRANCH_STORAGE || 
+					(p.getStatus() == Status.HUB_STORAGE && p.getDestBranch() == dest)) {
+					
+					double packageWeight = (p instanceof SmallPackage) ? 1 : ((StandardPackage)p).getWeight();
+					
+					if (totalWeight + packageWeight <= maxWeight) {
+						packagesToLoad.add(p);
+						totalWeight += packageWeight;
+					}
 				}
 			}
 		}
-		System.out.println(this.getName() + " loaded packages at " + sender.getName());
+		
+		// Second pass: actually move the packages
+		for (Package p : packagesToLoad) {
+			getPackages().add(p);
+			sender.removePackage(p); 
+			p.addRecords(status, this);
+		}
+		
+		System.out.println(this.getName() + " loaded " + packagesToLoad.size() + " packages at " + sender.getName());
 	}
 	
 	@Override

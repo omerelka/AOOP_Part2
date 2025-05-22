@@ -43,12 +43,12 @@ public abstract class Package {
 	}
 
 	
-	public Status getStatus() {
+	public synchronized Status getStatus() {
 		return status;
 	}
 
 	
-	public void setStatus(Status status) {
+	public synchronized  void setStatus(Status status) {
 		this.status = status;
 	}
 
@@ -83,7 +83,7 @@ public abstract class Package {
 	}
 
 	
-	public void addTracking(Node node, Status status) {
+	public synchronized  void addTracking(Node node, Status status) {
 		tracking.add(new Tracking(MainOffice.getClock(), node, status));
 	}
 	
@@ -119,7 +119,7 @@ public abstract class Package {
 		return "packageID=" + packageID + ", priority=" + priority + ", status=" + status + ", senderAddress=" + senderAddress + ", destinationAddress=" + destinationAddress;
 	}
 
-	public void addRecords(Status status, Node node) {
+	public synchronized  void addRecords(Status status, Node node) {
 		setStatus(status);
 		addTracking(node, status);
 	}
