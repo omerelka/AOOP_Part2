@@ -286,6 +286,7 @@ public class MainOffice implements Runnable {
     }
 
     private boolean allPackagesDelivered() {
+        if (packagesCreated < maxPackages){return false;}
         synchronized (packages) {
             for (Package p : packages) {
                 if (p.getStatus() != Status.DELIVERED)

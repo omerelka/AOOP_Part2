@@ -10,6 +10,9 @@ public class Branch implements Node, Runnable {
     private String branchName;
     protected Vector<Package> packages = new Vector<Package>();
     protected Vector<Truck> listTrucks = new Vector<Truck>();
+    
+    // Color attribute for UI
+    private Color branchColor = Color.decode("#1AB4E5"); // Start with light blue
 
     public Branch() {
         this("Branch " + counter);
@@ -40,6 +43,7 @@ public class Branch implements Node, Runnable {
 
     public synchronized void addPackage(Package pack) {
         packages.add(pack);
+        updateColor(); // Update color when packages change
         // Notify waiting trucks that there's a new package
         notifyAll();
     }
@@ -51,6 +55,7 @@ public class Branch implements Node, Runnable {
     public synchronized void addPackages(Package[] plist) {
         for (Package pack : plist)
             packages.add(pack);
+        updateColor(); // Update color when packages change
         // Notify waiting trucks
         notifyAll();
     }
@@ -58,6 +63,34 @@ public class Branch implements Node, Runnable {
     public synchronized void addTrucks(Truck[] tlist) {
         for (Truck trk : tlist)
             listTrucks.add(trk);
+    }
+    
+    // Method to update branch color based on packages
+    private void updateColor() {
+        boolean hasPackagesToDeliver = false;
+        synchronized (packages) {
+            for (Package p : packages) {
+                // Only count packages that actually need to be delivered by this branch
+                if (p.getStatus() == Status.DELIVERY) {
+                    hasPackagesToDeliver = true;
+                    break;
+                }
+            }
+        }
+        
+        if (hasPackagesToDeliver) {
+            branchColor = Color.decode("#1A5490"); // Dark blue - has packages to deliver
+        } else {
+            branchColor = Color.decode("#1AB4E5"); // Light blue - no packages to deliver
+        }
+        
+        // Debug output
+        System.out.println("DEBUG: " + branchName + " color update - hasPackagesToDeliver: " + hasPackagesToDeliver + ", total packages: " + packages.size());
+    }
+    
+    // Getter for branch color
+    public Color getBranchColor() {
+        return branchColor;
     }
 
     public int getBranchId() {
@@ -124,6 +157,13 @@ public class Branch implements Node, Runnable {
 
     public synchronized void removePackage(Package p) {
         packages.remove(p);
+        updateColor(); // Update color when packages change
+    }
+    
+    // Method to clean up delivered packages that shouldn't be here anymore
+    public synchronized void cleanupDeliveredPackages() {
+        packages.removeIf(p -> p.getStatus() == Status.DELIVERED);
+        updateColor();
     }
 
     @Override

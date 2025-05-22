@@ -15,6 +15,10 @@ public abstract class Package {
 	private Address destinationAddress;
 	private ArrayList<Tracking> tracking = new ArrayList<Tracking>();
 	
+	// Color attributes for UI
+	private Color senderColor = Color.RED.darker(); // Start with dark red (at sender)
+	private Color destinationColor = Color.PINK; // Start with light red (not at destination)
+	
 	
 	public Package(Priority priority, Address senderAddress,Address destinationAdress) {
 		packageID = countID++;
@@ -48,8 +52,36 @@ public abstract class Package {
 	}
 
 	
-	public synchronized  void setStatus(Status status) {
+	public synchronized void setStatus(Status status) {
 		this.status = status;
+		updateColors(); // Update colors when status changes
+	}
+	
+	// Method to update colors based on current status
+	private void updateColors() {
+		switch (status) {
+			case CREATION:
+				senderColor = Color.RED.darker(); // Dark red - package at sender
+				destinationColor = Color.PINK; // Light red - not at destination
+				break;
+			case DELIVERED:
+				senderColor = Color.PINK; // Light red - not at sender
+				destinationColor = Color.RED.darker(); // Dark red - package at destination
+				break;
+			default:
+				senderColor = Color.PINK; // Light red - not at sender
+				destinationColor = Color.PINK; // Light red - not at destination
+				break;
+		}
+	}
+	
+	// Getters for colors
+	public Color getSenderColor() {
+		return senderColor;
+	}
+	
+	public Color getDestinationColor() {
+		return destinationColor;
 	}
 
 	
