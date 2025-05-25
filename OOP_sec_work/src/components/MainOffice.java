@@ -286,15 +286,41 @@ public class MainOffice implements Runnable {
     }
 
     private boolean allPackagesDelivered() {
-        if (packagesCreated < maxPackages){return false;}
-        synchronized (packages) {
-            for (Package p : packages) {
-                if (p.getStatus() != Status.DELIVERED)
-                    return false;
+    // First check if all packages have been created
+    if (packagesCreated < maxPackages) {
+        return false;
+    }
+    
+    // Check if all packages are delivered
+    synchronized (packages) {
+        for (Package p : packages) {
+            if (p.getStatus() != Status.DELIVERED) {
+                return false;
             }
         }
-        return true;
     }
+    
+    // Check if all trucks are back at their home locations and available
+    
+    // Check hub trucks
+    for (Truck truck : hub.getListTrucks()) {
+        if (!truck.isAvailable()) {
+            return false; // Truck is still working
+        }
+    }
+    
+    // Check branch trucks
+    for (Branch branch : branches) {
+        for (Truck truck : branch.getListTrucks()) {
+            if (!truck.isAvailable()) {
+                return false; // Truck is still working
+            }
+        }
+    }
+    
+    // All packages delivered AND all trucks are idle
+    return true;
+}
 
     // Worker classes for threads
     private class BranchWorker implements Runnable {

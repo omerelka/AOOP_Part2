@@ -47,16 +47,42 @@ public class Hub extends Branch {
     }
 
     public synchronized void sendTruck(StandardTruck t) {
-        Branch targetBranch = branches.get(currentIndex);
+    Branch targetBranch = branches.get(currentIndex);
+    
+    System.out.println("DEBUG: " + t.getName() + " checking branch " + targetBranch.getName() + " for BRANCH_STORAGE packages");
+    
+    // בדוק אם יש חבילות בסניף שצריכות איסוף
+    boolean hasBranchPackages = false;
+    synchronized (targetBranch.getPackages()) {
+        System.out.println("DEBUG: Branch " + targetBranch.getName() + " has " + targetBranch.getPackages().size() + " packages");
+        for (Package p : targetBranch.getPackages()) {
+            System.out.println("DEBUG: Package " + p.getPackageID() + " status: " + p.getStatus());
+            if (p.getStatus() == Status.BRANCH_STORAGE) {
+                hasBranchPackages = true;
+                break;
+            }
+        }
+    }
+    
+    if (hasBranchPackages) {
+        // שלח משאית לאסוף מהסניף
         int travelTime = (new Random()).nextInt(10) + 1;
-        
-        // Load packages going to this branch
+        t.startJourneyToBranch(targetBranch, travelTime);
+        System.out.println(t.getName() + " is going to " + targetBranch.getName() + " to collect BRANCH_STORAGE packages, time to arrive: " + travelTime);
+    } else {
+        System.out.println("DEBUG: No BRANCH_STORAGE packages found in " + targetBranch.getName());
+        // הלוגיקה הרגילה - טען מההאב ושלח לסניף
         t.load(this, targetBranch, Status.BRANCH_TRANSPORT);
         
-        // Start the journey using the new method
-        t.startJourneyToBranch(targetBranch, travelTime);
-        
-        System.out.println(t.getName() + " is on it's way to " + targetBranch.getName() + ", time to arrive: " + travelTime);
-        currentIndex = (currentIndex + 1) % branches.size();
+        if (!t.getPackages().isEmpty()) {
+            int travelTime = (new Random()).nextInt(10) + 1;
+            t.startJourneyToBranch(targetBranch, travelTime);
+            System.out.println(t.getName() + " is on it's way to " + targetBranch.getName() + ", time to arrive: " + travelTime);
+        } else {
+            System.out.println(t.getName() + " - no packages to transport, staying at hub");
+        }
     }
+    
+    currentIndex = (currentIndex + 1) % branches.size();
+}
 }

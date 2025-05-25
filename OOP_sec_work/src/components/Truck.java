@@ -2,17 +2,23 @@ package components;
 
 import java.util.Vector;
 import java.util.Random;
-import java.awt.Point;
+import java.awt.*;
+import GUI.TruckVisual;
 
-public abstract class Truck implements Node, Runnable {
+public abstract class Truck implements Node, Runnable , TruckVisual{
     private static int countID = 2000;
     final private int truckID;
     private String licensePlate;
     private String truckModel;
     private boolean available = true;
+    private boolean isEmpty;
     private int timeLeft = 0;
     private Vector<Package> packages = new Vector<Package>();
     private Point location;
+
+    private Point startPoint;
+    private Point endPoint;
+    private int totalTime;
     
     // default random constructor
     public Truck() {
@@ -93,4 +99,46 @@ public abstract class Truck implements Node, Runnable {
 
     // Abstract method that subclasses must implement
     public abstract void work();
+
+    @Override
+    public abstract void draw(Graphics2D g2, Point position);
+
+    public boolean isEmpty(){
+        return getPackages().isEmpty() == true;
+    }
+
+
+
+    public Point getStartPoint() { return startPoint; }
+public void setStartPoint(Point startPoint) { this.startPoint = startPoint; }
+
+public Point getEndPoint() { return endPoint; }
+public void setEndPoint(Point endPoint) { this.endPoint = endPoint; }
+
+public int getTotalTime() { return totalTime; }
+public void setTotalTime(int totalTime) { this.totalTime = totalTime; }
+
+// Method to calculate current position based on progress
+public Point getCurrentPosition() {
+    if (startPoint == null || endPoint == null || totalTime == 0 || isAvailable()) {
+        Point currentLoc = getLocation();
+        System.out.println("DEBUG: " + getName() + " using static location: " + currentLoc);
+        return currentLoc;
+    }
+    
+    // Calculate progress
+    double progress = 1.0 - ((double) timeLeft / totalTime);
+    if (progress > 1.0) progress = 1.0;
+    if (progress < 0.0) progress = 0.0;
+    
+    // Interpolate between start and end points
+    int currentX = (int) (startPoint.x + (endPoint.x - startPoint.x) * progress);
+    int currentY = (int) (startPoint.y + (endPoint.y - startPoint.y) * progress);
+    
+    Point currentPos = new Point(currentX, currentY);
+    System.out.println("DEBUG: " + getName() + " moving from " + startPoint + " to " + endPoint + ", progress: " + progress + ", current: " + currentPos);
+    
+    return currentPos;
+}
+
 }

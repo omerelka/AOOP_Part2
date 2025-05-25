@@ -6,6 +6,7 @@ import components.Package;
 import java.util.Vector;
 import javax.swing.*;
 import java.awt.*;
+import GUI.TruckVisual;
 
 public class SystemPanel extends JPanel {
     private MainOffice mainOffice;
@@ -57,8 +58,35 @@ public class SystemPanel extends JPanel {
         }
     }
 
+
+
+    private void drawAllTrucks(Graphics2D g2) {
+    if (mainOffice == null) return;
+    
+    // Draw hub trucks
+    for (components.Truck truck : mainOffice.getHub().getListTrucks()) {
+        if (truck instanceof TruckVisual && !truck.isAvailable()) {
+            // Use getCurrentPosition() instead of getLocation()
+            Point currentPos = truck.getCurrentPosition();
+            ((TruckVisual) truck).draw(g2, currentPos);
+        }
+    }
+    
+    // Draw branch trucks
+    for (Branch branch : mainOffice.getBranches()) {
+        for (components.Truck truck : branch.getListTrucks()) {
+            if (truck instanceof TruckVisual && !truck.isAvailable()) {
+                // Use getCurrentPosition() instead of getLocation()
+                Point currentPos = truck.getCurrentPosition();
+                ((TruckVisual) truck).draw(g2, currentPos);
+            }
+        }
+    }
+}
+
     @Override
     protected void paintComponent(Graphics g) {
+       
         super.paintComponent(g);
 
         if (numBranches == 0 || mainOffice == null) return;
@@ -151,5 +179,10 @@ public class SystemPanel extends JPanel {
                 t.setLocation(mainOffice.getHub().getLocation());
             }
         }
+
+         // Draw all trucks
+        drawAllTrucks(g2);
     }
+
+    
 }

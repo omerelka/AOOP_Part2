@@ -71,7 +71,7 @@ public class Branch implements Node, Runnable {
         synchronized (packages) {
             for (Package p : packages) {
                 // Only count packages that actually need to be delivered by this branch
-                if (p.getStatus() == Status.DELIVERY) {
+                if (p.getStatus() == Status.CREATION || p.getStatus() == Status.DELIVERY) {
                     hasPackagesToDeliver = true;
                     break;
                 }
@@ -79,9 +79,9 @@ public class Branch implements Node, Runnable {
         }
         
         if (hasPackagesToDeliver) {
-            branchColor = Color.decode("#1A5490"); // Dark blue - has packages to deliver
+            branchColor = Color.blue.darker(); // Dark blue - has packages to deliver
         } else {
-            branchColor = Color.decode("#1AB4E5"); // Light blue - no packages to deliver
+            branchColor = Color.blue.brighter(); // Light blue - no packages to deliver
         }
         
         // Debug output
@@ -113,6 +113,7 @@ public class Branch implements Node, Runnable {
             for (Truck v : listTrucks) {
                 if (v.isAvailable()) {
                     v.collectPackage(p);
+                    removePackage(p);
                     return;
                 }
             }
@@ -120,16 +121,20 @@ public class Branch implements Node, Runnable {
     }
 
     @Override
-    public void deliverPackage(Package p) {
-        synchronized (listTrucks) {
-            for (Truck v : listTrucks) {
-                if (v.isAvailable()) {
-                    v.deliverPackage(p);
-                    return;
-                }
+public void deliverPackage(Package p) {
+    System.out.println("DEBUG: " + branchName + " deliverPackage called for package " + p.getPackageID());
+    synchronized (listTrucks) {
+        for (Truck v : listTrucks) {
+            System.out.println("DEBUG: Checking truck " + v.getName() + " - available: " + v.isAvailable());
+            if (v.isAvailable()) {
+                System.out.println("DEBUG: Assigning package " + p.getPackageID() + " to " + v.getName());
+                v.deliverPackage(p);
+                return;
             }
         }
     }
+    System.out.println("DEBUG: No available trucks found in " + branchName + " for package " + p.getPackageID());
+}
 
     @Override
     public void work() {
@@ -139,17 +144,30 @@ public class Branch implements Node, Runnable {
     }
 
     public void localWork() {
-        synchronized (packages) {
-            for (Package p : packages) {
-                if (p.getStatus() == Status.CREATION) {
-                    collectPackage(p);
-                }
-                if (p.getStatus() == Status.DELIVERY) {
-                    deliverPackage(p);
-                }
+    synchronized (packages) {
+        // Create a copy to avoid concurrent modification
+        Vector<Package> packagesToProcess = new Vector<>(packages);
+        
+        System.out.println("DEBUG: " + branchName + " localWork - checking " + packagesToProcess.size() + " packages");
+        
+        for (Package p : packagesToProcess) {
+            System.out.println("DEBUG: Package " + p.getPackageID() + " status: " + p.getStatus());
+            
+            if (p.getStatus() == Status.CREATION) {
+                collectPackage(p);
+            }
+            if (p.getStatus() == Status.DISTRIBUTION) {
+                p.addRecords(Status.DELIVERY, this);
+                System.out.println("DEBUG: Changed package " + p.getPackageID() + " from DISTRIBUTION to DELIVERY");
+                deliverPackage(p);
+            }
+            if (p.getStatus() == Status.DELIVERY) {
+                System.out.println("DEBUG: Found DELIVERY package " + p.getPackageID() + " - calling deliverPackage");
+                deliverPackage(p);
             }
         }
     }
+}
 
     public Vector<Package> getPackages() {
         return packages;

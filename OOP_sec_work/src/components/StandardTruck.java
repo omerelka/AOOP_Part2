@@ -1,5 +1,6 @@
 package components;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -50,13 +51,13 @@ public class StandardTruck extends Truck {
     }
 
     @Override
-    public void deliverPackage(Package p) {
-        if (destination == MainOffice.getHub())
-            p.addRecords(Status.HUB_STORAGE, destination);
-        else
-            p.addRecords(Status.DELIVERY, destination);
-        destination.addPackage(p);
-    }
+public void deliverPackage(Package p) {
+    if (destination == MainOffice.getHub())
+        p.addRecords(Status.HUB_STORAGE, destination);
+    else
+        p.addRecords(Status.DELIVERY, destination); // ✅ שנה ל-DELIVERY במקום DISTRIBUTION
+    destination.addPackage(p);
+}
 
     public void load(Branch sender, Branch dest, Status status) {
         double totalWeight = 0;
@@ -113,13 +114,43 @@ public class StandardTruck extends Truck {
 
     // Method to start journey to a branch (called by Hub)
     public void startJourneyToBranch(Branch targetBranch, int travelTime) {
-        setDestination(targetBranch);
-        setAvailable(false);
-        setTimeLeft(travelTime);
-    }
+    setDestination(targetBranch);
+    setAvailable(false);
+    setTimeLeft(travelTime);
+    setTotalTime(travelTime); // Store total time
+    
+    // Set movement: Hub → Branch
+    Point startPoint = MainOffice.getHub().getLocation();
+    Point endPoint = targetBranch.getLocation();
+    
+    this.setStartPoint(startPoint);
+    this.setEndPoint(endPoint);
+    
+    System.out.println("DEBUG: " + getName() + " starting journey from " + startPoint + " to " + endPoint + ", timeLeft: " + travelTime);
+}
 
     @Override
     public void run() {
         work();
     }
+
+    @Override
+public void draw(Graphics2D g2, Point position) {
+    // Choose color based on whether truck has packages
+    if (getPackages().isEmpty()) {
+        g2.setColor(Color.GREEN.brighter()); // Light green when empty
+    } else {
+        g2.setColor(Color.GREEN.darker());   // Dark green when loaded
+    }
+    
+    // Draw truck body (16x16 square)
+    g2.fillRect(position.x - 8, position.y - 8, 16, 16);
+    
+    // Draw 4 black wheels (10x10 circles at corners)
+    g2.setColor(Color.BLACK);
+    g2.fillOval(position.x - 13, position.y - 13, 10, 10); // Top-left
+    g2.fillOval(position.x + 3, position.y - 13, 10, 10);  // Top-right
+    g2.fillOval(position.x - 13, position.y + 3, 10, 10);  // Bottom-left
+    g2.fillOval(position.x + 3, position.y + 3, 10, 10);   // Bottom-right
+}
 }

@@ -68,6 +68,11 @@ public abstract class Package {
 				senderColor = Color.PINK; // Light red - not at sender
 				destinationColor = Color.RED.darker(); // Dark red - package at destination
 				break;
+
+			case COLLECTION: // ← Add this case
+				senderColor = Color.PINK; // Light red - truck is collecting
+				destinationColor = Color.PINK; // Light red - not at destination
+				break;
 			default:
 				senderColor = Color.PINK; // Light red - not at sender
 				destinationColor = Color.PINK; // Light red - not at destination
