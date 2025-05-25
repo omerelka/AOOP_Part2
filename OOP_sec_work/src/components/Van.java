@@ -53,6 +53,8 @@ public void deliverPackage(Package p) {
     
     @Override
 public void work() {
+        System.out.println("DEBUG: " + getName() + " work() called, available: " + isAvailable() + ", timeLeft: " + getTimeLeft());
+
     if (!isAvailable()) {
         setTimeLeft(getTimeLeft() - 1);
         if (this.getTimeLeft() == 0) {
@@ -71,7 +73,18 @@ public void work() {
                     System.out.println(getName() + " has collected " + p.getName() + " and is returning to " + p.getSenderBranch().getName());
                     return; // צא מהלולאה - עדיין עובד
                     
-                } else if (p.getStatus() == Status.DELIVERY) {
+                } 
+
+                else if (p.getStatus() == Status.DISTRIBUTION) {
+                    // Van delivered the package to customer
+                    p.addRecords(Status.DELIVERED, null);
+                    System.out.println(getName() + " has delivered " + p.getName() + " to the destination");
+                    if (p instanceof SmallPackage && ((SmallPackage) p).isAcknowledge()) {
+                        System.out.println("Acknowledge sent for " + p.getName());
+                    }
+                }
+                
+                else if (p.getStatus() == Status.DELIVERY) {
                     // ואן מסר את החבילה ללקוח
                     p.addRecords(Status.DELIVERED, null);
                     p.getDestBranch().removePackage(p);

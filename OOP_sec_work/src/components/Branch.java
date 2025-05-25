@@ -120,20 +120,24 @@ public class Branch implements Node, Runnable {
         }
     }
 
-    @Override
+   @Override
 public void deliverPackage(Package p) {
     System.out.println("DEBUG: " + branchName + " deliverPackage called for package " + p.getPackageID());
+    
+    // CHECK: Only deliver packages that are actually ready for delivery
+    if (p.getStatus() != Status.DELIVERY) {
+        System.out.println("DEBUG: Package " + p.getPackageID() + " not ready for delivery (status: " + p.getStatus() + ")");
+        return;
+    }
+    
     synchronized (listTrucks) {
         for (Truck v : listTrucks) {
-            System.out.println("DEBUG: Checking truck " + v.getName() + " - available: " + v.isAvailable());
             if (v.isAvailable()) {
-                System.out.println("DEBUG: Assigning package " + p.getPackageID() + " to " + v.getName());
                 v.deliverPackage(p);
                 return;
             }
         }
     }
-    System.out.println("DEBUG: No available trucks found in " + branchName + " for package " + p.getPackageID());
 }
 
     @Override
@@ -156,11 +160,7 @@ public void deliverPackage(Package p) {
             if (p.getStatus() == Status.CREATION) {
                 collectPackage(p);
             }
-            if (p.getStatus() == Status.DISTRIBUTION) {
-                p.addRecords(Status.DELIVERY, this);
-                System.out.println("DEBUG: Changed package " + p.getPackageID() + " from DISTRIBUTION to DELIVERY");
-                deliverPackage(p);
-            }
+            
             if (p.getStatus() == Status.DELIVERY) {
                 System.out.println("DEBUG: Found DELIVERY package " + p.getPackageID() + " - calling deliverPackage");
                 deliverPackage(p);
