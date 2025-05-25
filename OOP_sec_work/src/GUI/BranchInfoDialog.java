@@ -1,12 +1,12 @@
 package GUI;
 
-import components.MainOffice;
 import components.Branch;
-
-import javax.swing.*;
+import components.MainOffice;
+import components.Package;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
+import java.util.Vector;
+import javax.swing.*;
 
 public class BranchInfoDialog extends JDialog {
     private JComboBox<String> branchComboBox;
@@ -17,7 +17,7 @@ public class BranchInfoDialog extends JDialog {
         super(parent, "Choose branch", true);
         setLayout(new BorderLayout());
 
-        // רשימת סניפים
+        // קומבו של סניפים
         branchComboBox = new JComboBox<>();
         branchComboBox.addItem("Sorting center");
         for (int i = 0; i < mainOffice.getBranches().size(); i++) {
@@ -33,16 +33,34 @@ public class BranchInfoDialog extends JDialog {
 
         okButton.addActionListener((ActionEvent e) -> {
             int index = branchComboBox.getSelectedIndex();
-            String info;
 
+            // קבלת החבילות מהאב או מסניף
+            Vector<Package> packages;
             if (index == 0) {
-                info = mainOffice.getHub().toString();
+                packages = mainOffice.getHub().getPackages();
             } else {
                 Branch branch = mainOffice.getBranches().get(index - 1);
-                info = branch.toString();
+                packages = branch.getPackages();
             }
 
-            JOptionPane.showMessageDialog(this, info, "Branch info", JOptionPane.INFORMATION_MESSAGE);
+            // יצירת טבלה
+            String[] columnNames = { "Package ID", "Sender", "Destination", "Priority", "Status" };
+            String[][] data = new String[packages.size()][5];
+
+            for (int i = 0; i < packages.size(); i++) {
+                Package p = packages.get(i);
+                data[i][0] = String.valueOf(p.getPackageID());
+                data[i][1] = p.getSenderAddress().toString();
+                data[i][2] = p.getDestinationAddress().toString();
+                data[i][3] = p.getPriority().toString();
+                data[i][4] = p.getStatus().toString();
+            }
+
+            JTable table = new JTable(data, columnNames);
+            JScrollPane scrollPane = new JScrollPane(table);
+            scrollPane.setPreferredSize(new Dimension(600, 200));
+
+            JOptionPane.showMessageDialog(this, scrollPane, "Package list", JOptionPane.PLAIN_MESSAGE);
         });
 
         cancelButton.addActionListener(e -> dispose());
