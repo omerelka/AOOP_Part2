@@ -134,7 +134,7 @@ public void deliverPackage(Package p) {
         work();
     }
 
-    @Override
+   @Override
 public void draw(Graphics2D g2, Point position) {
     // Choose color based on whether truck has packages
     if (getPackages().isEmpty()) {
@@ -152,5 +152,19 @@ public void draw(Graphics2D g2, Point position) {
     g2.fillOval(position.x + 3, position.y - 13, 10, 10);  // Top-right
     g2.fillOval(position.x - 13, position.y + 3, 10, 10);  // Bottom-left
     g2.fillOval(position.x + 3, position.y + 3, 10, 10);   // Bottom-right
+    
+    // Draw package count above the truck if it has packages
+    if (!getPackages().isEmpty()) {
+        g2.setColor(Color.BLACK);
+        g2.setFont(new Font("Arial", Font.BOLD, 12));
+        String packageCount = String.valueOf(getPackages().size());
+        
+        // Get text metrics to center the text above the truck
+        FontMetrics fm = g2.getFontMetrics();
+        int textWidth = fm.stringWidth(packageCount);
+        
+        // Draw the number centered above the truck (20 pixels above)
+        g2.drawString(packageCount, position.x - textWidth/2, position.y - 20);
+    }
 }
 }
